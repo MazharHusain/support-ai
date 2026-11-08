@@ -1,15 +1,20 @@
 'use client'
-import { navigate } from 'next/dist/client/components/segment-cache/navigation'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { motion } from "motion/react"
+
+// Use the hardcoded production URL so the embed code always has the correct src
+// even when NEXT_PUBLIC_APP_URL is undefined on the client side.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://support-ai-kohl.vercel.app"
+
 function EmbedClient({ ownerId }: { ownerId: string }) {
     const navigate = useRouter()
     const [copied, setCopied] = useState(false)
-    const embedCode = `<script 
-    src="${process.env.NEXT_PUBLIC_APP_URL}/chatBot.js" 
-    data-owner-id="${ownerId}">
-</script> `
+
+    // Guard: if ownerId is missing, show a warning embed code
+    const embedCode = ownerId
+        ? `<script \n    src="${APP_URL}/chatBot.js" \n    data-owner-id="${ownerId}">\n</script>`
+        : `<!-- Error: Could not get your owner ID. Please refresh the page and try again. -->`
     const copyCode = () => {
         navigator.clipboard.writeText(embedCode)
         setCopied(true)

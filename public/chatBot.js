@@ -5,8 +5,9 @@
     const scriptTag = document.currentScript;
     const ownerId = scriptTag.getAttribute("data-owner-id")
 
-    if (!ownerId) {
-        console.log("owner id not found")
+    // FIX 1: Check for missing or "undefined" ownerId
+    if (!ownerId || ownerId === "undefined") {
+        console.warn("[SupportAI] owner id not found or invalid. Chatbot will not load.")
         return
     }
 
@@ -50,6 +51,7 @@
         fontFamily: "Inter, system-ui, sans-serif",
     })
 
+    // FIX 2: type:"text" -> type="text" (was an HTML typo inside JS string)
     box.innerHTML = `<div style="
       background:#000;
       color:#fff;
@@ -78,7 +80,7 @@
       padding:8px;
       gap:6px;
     ">
-    <input id="chat-input" type:"text" 
+    <input id="chat-input" type="text"
     style="
           flex:1;
           padding:8px 10px;
@@ -138,7 +140,8 @@ messageArea.scrollTop=messageArea.scrollHeight
 
 }
 
-sendBtn.onclick=async ()=>{
+// FIX 3 & 4: Content-Type header fix + data undefined in catch block fix
+async function sendMessage(){
     const text=input.value.trim()
     if(!text){
         return
@@ -159,7 +162,7 @@ sendBtn.onclick=async ()=>{
     try {
     const response=await fetch(api_Url,{
         method:"POST",
-        headers:{"content-Type":"application/json"},
+        headers:{"Content-Type":"application/json"},  // FIX 3: was "content-Type"
         body:JSON.stringify({
             ownerId,message:text
         })
@@ -170,14 +173,20 @@ sendBtn.onclick=async ()=>{
     addMessage(data|| "something went wrong","ai")
 
 } catch (error) {
-    console.log(error)
+    console.error("[SupportAI] Chat error:", error)
     messageArea.removeChild(typing)
-    addMessage(data|| "something went wrong","ai")
+    addMessage("Something went wrong. Please try again.","ai")  // FIX 4: 'data' was undefined in catch
 }
 }
 
+sendBtn.onclick = sendMessage
 
-
+// FIX 5: Allow Enter key to send message
+input.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        sendMessage()
+    }
+})
 
 
 })()
